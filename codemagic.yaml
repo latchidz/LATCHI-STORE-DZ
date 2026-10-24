@@ -1,0 +1,143 @@
+# ============================================================
+#  CODEMAGIC CI/CD — LATCHI STORE DZ
+#  بناء APK + AAB تلقائياً عند كل push على main
+# ============================================================
+#  الإعداد: Codemagic → Add application → GitHub → latchidz/LATCHI-STORE-DZ
+#  ثم: Environment variables → أضف:
+#     SUPABASE_URL       (مثال: https://abcd.supabase.co)
+#     SUPABASE_ANON_KEY  (المفتاح العام anon/publishable)
+#  ⚠️  ضعهم كـ"Secure" ومتاحة لـAll build steps
+# ============================================================
+
+definitions:
+  env_vars:
+    FLUTTER_VERSION: "3.35.3"
+    JAVA_VERSION: "17"
+
+workflows:
+  # ---------------- Android: APK + AAB ----------------
+  android-release:
+    name: Android Release (APK + AAB)
+    instance_type: linux_x2
+    max_build_duration: 60
+    environment:
+      flutter: $FLUTTER_VERSION
+      java: $JAVA_VERSION
+      android_signing:
+        - latchi_keystore        # من Codemagic → Code signing identities
+      vars:
+        PACKAGE_NAME: "dz.latchi.latchi_store_dz"
+        SUPABASE_URL: $SUPABASE_URL
+        SUPABASE_ANON_KEY: $SUPABASE_ANON_KEY
+    cache:
+      cache_paths:
+        - $FLUTTER_ROOT/.pub-cache
+        - $HOME/.gradle/caches
+    triggering:
+      events: [push]
+      branch_patterns:
+        - pattern: main
+          include: true
+    scripts:
+      - name: Flutter version
+        script: flutter --version
+
+      - name: Get packages
+        script: flutter pub get
+
+      - name: Analyze (fails on error)
+        script: flutter analyze --no-fatal-infos
+
+      - name: Generate launcher icons + splash
+        script: |
+          flutter pub run flutter_launcher_icons
+          flutter pub run flutter_native_splash:create
+
+      - name: Build APK (release)
+        script: |
+          flutter build apk --release \
+            --dart-define=SUPABASE_URL="$SUPABASE_URL" \
+            --dart-define=SUPABASE_ANON_KEY="$SUPABASE_ANON_KEY"
+
+      - name: Build AAB (release, Play Store)
+        script: |
+          flutter build appbundle --release \
+            --dart-define=SUPABASE_URL="$SUPABASE_URL" \
+            --dart-define=SUPABASE_ANON_KEY="$SUPABASE_ANON_KEY"
+
+    artifacts:
+      - build/app/outputs/flutter-apk/*.apk
+      - build/app/outputs/bundle/release/*.aab
+      - build/app/outputs/**/mapping.txt
+
+    publishing:
+      email:
+        recipients:
+          - $CM_EMAIL
+        notify:
+          success: true
+          failure: true
+
+  # ---------------- Android: Debug APK سريع للاختبار ----------------
+  android-debug:
+    name: Android Debug (APK سريع)
+    instance_type: linux_x2
+    max_build_duration: 30
+    environment:
+      flutter: $FLUTTER_VERSION
+      java: $JAVA_VERSION
+      vars:
+        SUPABASE_URL: $SUPABASE_URL
+        SUPABASE_ANON_KEY: $SUPABASE_ANON_KEY
+    scripts:
+      - name: Get packages
+        script: flutter pub get
+      - name: Build debug APK
+        script: |
+          flutter build apk --debug \
+            --dart-define=SUPABASE_URL="$SUPABASE_URL" \
+            --dart-define=SUPABASE_ANON_KEY="$SUPABASE_ANON_KEY"
+    artifacts:
+      - build/app/outputs/flutter-apk/*.apk
+    triggering:
+      events: [push]
+      branch_patterns:
+        - pattern: dev
+          include: true
+
+  # ---------------- iOS (يحتاج شهادة Apple) ----------------
+  ios-release:
+    name: iOS Release (IPA)
+    instance_type: mac_mini_m2
+    max_build_duration: 90
+    environment:
+      flutter: $FLUTTER_VERSION
+      xcode: latest
+      cocoapods: default
+      ios_signing:
+        distribution_type: app_store
+        bundle_identifier: dz.latchi.latchiStoreDz
+      vars:
+        SUPABASE_URL: $SUPABASE_URL
+        SUPABASE_ANON_KEY: $SUPABASE_ANON_KEY
+    scripts:
+      - name: Get packages
+        script: flutter pub get
+      - name: Pod install
+        script: |
+          find . -name "Podfile" -execdir pod install \;
+      - name: Build IPA
+        script: |
+          flutter build ipa --release \
+            --dart-define=SUPABASE_URL="$SUPABASE_URL" \
+            --dart-define=SUPABASE_ANON_KEY="$SUPABASE_ANON_KEY"
+    artifacts:
+      - build/ios/ipa/*.ipa
+      - /tmp/xcodebuild_logs/*.log
+    publishing:
+      email:
+        recipients:
+          - $CM_EMAIL
+        notify:
+          success: true
+          failure: true

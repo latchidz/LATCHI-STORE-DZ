@@ -1,0 +1,86 @@
+name: latchi_store_dz
+description: "LATCHI STORE DZ — Algerian multi-role e-commerce (COD) app."
+publish_to: 'none'
+version: 1.0.0+1
+
+environment:
+  sdk: ^3.9.0
+
+dependencies:
+  flutter:
+    sdk: flutter
+  flutter_localizations:
+    sdk: flutter
+
+  # --- state & architecture ---
+  flutter_riverpod: ^2.6.1
+  riverpod_annotation: ^2.6.1
+
+  # --- backend ---
+  supabase_flutter: ^2.8.4
+  storage_client: ^2.8.1
+
+  # --- routing ---
+  go_router: ^14.6.2
+
+  # --- ui / ux ---
+  google_fonts: ^6.2.1
+  cached_network_image: ^3.4.1
+  shimmer: ^3.0.0
+  fl_chart: ^0.69.2
+  smooth_page_indicator: ^1.2.0+3
+  pinput: ^5.0.1
+  intl: ^0.20.2
+
+  # --- device services ---
+  image_picker: ^1.1.2
+  url_launcher: ^6.3.1
+  share_plus: ^10.1.2
+  path_provider: ^2.1.5
+  shared_preferences: ^2.3.3
+  pdf: ^3.11.1
+  printing: ^5.13.4
+  flutter_secure_storage: ^9.2.2
+
+dev_dependencies:
+  flutter_test:
+    sdk: flutter
+  flutter_lints: ^5.0.0
+  build_runner: ^2.4.13
+  riverpod_generator: ^2.6.3
+  flutter_launcher_icons: ^0.14.1
+  flutter_native_splash: ^2.4.3
+
+flutter:
+  uses-material-design: true
+  assets:
+    - assets/data/algeria.json
+  fonts:
+    - family: Tajawal
+      fonts:
+        - asset: assets/fonts/Tajawal-Regular.ttf
+          weight: 400
+        - asset: assets/fonts/Tajawal-Medium.ttf
+          weight: 500
+        - asset: assets/fonts/Tajawal-Bold.ttf
+          weight: 700
+        - asset: assets/fonts/Tajawal-Black.ttf
+          weight: 900
+
+flutter_launcher_icons:
+  android: "launcher_icon"
+  ios: true
+  image_path: "assets/icon/app_icon.png"
+  remove_alpha_ios: true
+  adaptive_icon_background: "#0A6942"
+  adaptive_icon_foreground: "assets/icon/app_icon_foreground.png"
+  min_sdk_android: 21
+
+flutter_native_splash:
+  color: "#0A6942"
+  image: "assets/icon/splash_logo.png"
+  android: true
+  ios: true
+  android_12:
+    image: "assets/icon/splash_logo.png"
+    color: "#0A6942"
